@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#140a24" />
+<title>the quest</title>
+<meta property="og:title" content="a quest" />
+<meta property="og:description" content="3 riddles. one prize. good luck." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<!--
+  ┌───────────────────────────────────────────────────────────────────┐
+  │  THE QUEST — she solves 3 riddles, unlocks your Instagram.         │
+  │  SEND: in the chat, one casual line, e.g.                          │
+  │    "i'm not just giving you my @. you have to earn it 😌 [link]"   │
+  │  PERSONALIZE (optional): set CONFIG.her to her name.               │
+  │  SWAP RIDDLES: edit CONFIG.riddles (q / answers[] / hint).         │
+  │  Your insta + QR (insta.png) are already wired in.                 │
+  └───────────────────────────────────────────────────────────────────┘
+-->
+<style>
+  :root{
+    --bg1:#1a0f30; --bg2:#2a1450; --bg3:#3d1a4a;
+    --gold:#ffd479; --gold2:#ffb347; --cream:#fff4e2; --ink:#f3e9ff;
+    --serif:"Fraunces", Georgia, serif; --sans:"DM Sans", system-ui, sans-serif;
+  }
+  *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:radial-gradient(120% 90% at 50% 0%, var(--bg3), var(--bg2) 45%, var(--bg1) 100%);
+    color:var(--ink); font-family:var(--sans);
+    position:fixed; inset:0; overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  .stars{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:radial-gradient(1.5px 1.5px at 20% 30%, #fff8 40%, transparent),
+      radial-gradient(1.5px 1.5px at 70% 20%, #fff6 40%, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff5 40%, transparent),
+      radial-gradient(1.5px 1.5px at 85% 70%, #fff7 40%, transparent),
+      radial-gradient(1px 1px at 15% 80%, #fff6 40%, transparent),
+      radial-gradient(1px 1px at 55% 85%, #fff5 40%, transparent);}
+  #fx{position:fixed; inset:0; z-index:5; pointer-events:none;}
+
+  .stage{position:relative; z-index:3; height:100%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:26px 22px;
+    padding-top:max(26px, env(safe-area-inset-top)); padding-bottom:max(26px, env(safe-area-inset-bottom)); text-align:center;}
+
+  .locks{display:flex; gap:14px; margin-bottom:6px; font-size:24px; opacity:0; transition:opacity .5s;}
+  .locks.show{opacity:1;}
+  .locks .l{filter:grayscale(1) opacity(.4); transition:transform .4s cubic-bezier(.34,1.56,.64,1), filter .4s;}
+  .locks .l.done{filter:none; transform:scale(1.15);}
+
+  .scene{width:100%; max-width:440px; display:flex; flex-direction:column; align-items:center; gap:18px;}
+  .scene.enter{animation:enter .45s cubic-bezier(.2,.7,.3,1) both;}
+  .scene.leave{animation:leave .25s ease-in forwards;}
+  @keyframes enter{from{opacity:0; transform:translateY(18px) scale(.98);} to{opacity:1; transform:none;}}
+  @keyframes leave{to{opacity:0; transform:translateY(-14px) scale(.98);}}
+
+  .eyebrow{font-size:12.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); font-weight:600;}
+  h1{font-family:var(--serif); font-weight:600; font-size:clamp(2.2rem,10vw,3.4rem); line-height:1.04;
+    background:linear-gradient(180deg,#fff,var(--gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .lead{font-size:16.5px; line-height:1.55; color:#e7dcff; max-width:30ch;}
+  .lead .dim{color:#b9a9d8;}
+
+  .riddle{font-family:var(--serif); font-style:italic; font-size:clamp(1.3rem,5.6vw,1.7rem); line-height:1.45; color:var(--cream); max-width:26ch;}
+  .rnum{font-size:12.5px; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); font-weight:600;}
+
+  .field{display:flex; gap:8px; width:100%; max-width:360px; margin-top:2px;}
+  input[type=text]{flex:1; font-family:var(--sans); font-size:17px; color:#fff;
+    background:rgba(255,255,255,.08); border:1.5px solid rgba(255,212,121,.35);
+    border-radius:14px; padding:14px 16px; outline:none; transition:border .2s, background .2s;}
+  input[type=text]::placeholder{color:#b8a8d6;}
+  input[type=text]:focus{border-color:var(--gold); background:rgba(255,255,255,.12);}
+  input.wrong{animation:shake .4s; border-color:#ff8a8a;}
+  @keyframes shake{0%,100%{transform:translateX(0);} 20%{transform:translateX(-7px);} 40%{transform:translateX(7px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);}}
+
+  .btn{font-family:var(--sans); font-weight:700; font-size:16px; color:#2a1450;
+    background:linear-gradient(120deg,var(--gold),var(--gold2)); border:none; border-radius:14px;
+    padding:14px 20px; cursor:pointer; box-shadow:0 8px 22px rgba(255,180,71,.3);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1);}
+  .btn:active{transform:scale(.95);}
+  .btn.big{padding:16px 34px; border-radius:99px; font-size:17px;}
+
+  .feedback{min-height:22px; font-size:14.5px; color:var(--gold); font-family:var(--serif); font-style:italic;}
+  .helpers{display:flex; gap:18px; align-items:center; min-height:20px;}
+  .link{background:none; border:none; color:#c7b6e6; font-family:var(--sans); font-size:13.5px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:4px;}
+  .hinttext{font-size:14px; color:#d9c8f5; font-style:italic; max-width:30ch; min-height:0;}
+
+  /* reveal */
+  .prize{display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .qr{width:min(58vw,210px); border-radius:18px; box-shadow:0 14px 40px rgba(0,0,0,.45); background:#fff; padding:8px;}
+  .handle{font-family:var(--serif); font-size:clamp(1.4rem,7vw,2rem); color:var(--cream); letter-spacing:.5px;}
+  a.iglink{display:inline-flex; align-items:center; gap:9px; text-decoration:none;
+    font-family:var(--sans); font-weight:700; font-size:17px; color:#fff;
+    background:linear-gradient(120deg,#7d3cff,#ff5f8f 60%,#ffb347);
+    padding:15px 26px; border-radius:99px; box-shadow:0 10px 30px rgba(255,95,143,.35);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1);}
+  a.iglink:active{transform:scale(.95);}
+  .smallnote{font-size:13px; color:#bcabdc; max-width:28ch;}
+  .replay{background:none; border:none; color:#9c8cc0; font-family:var(--sans); font-size:13px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px; margin-top:6px;}
+
+  @media (prefers-reduced-motion: reduce){ .scene.enter,.scene.leave{animation:none;} }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <canvas id="fx"></canvas>
+  <main class="stage">
+    <div class="locks" id="locks"><span class="l">🔒</span><span class="l">🔒</span><span class="l">🔒</span></div>
+    <div id="center"></div>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+
+  var CONFIG = {
+    her: "",                       // optional: her name for the intro. "" = generic.
+    instagram: "nikhil_1674_",     // your handle (also wired to the QR image insta.png)
+    riddles: [
+      { q:"I get wetter and wetter the more I dry. What am I?",
+        answers:["towel","a towel","towels"], hint:"you reach for me right after a shower." },
+      { q:"I have many keys but can’t open a single lock. What am I?",
+        answers:["piano","a piano","keyboard","a keyboard","keys"], hint:"i make music — or i sit under your fingers at a desk." },
+      { q:"The more you take, the more you leave behind. What am I?",
+        answers:["footsteps","footprints","steps","my footsteps","foot steps"], hint:"you leave a trail of me on a beach." }
+    ]
+  };
+
+  var center = document.getElementById("center");
+  var locksEl = document.getElementById("locks");
+  var lockSpans = locksEl.querySelectorAll(".l");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var idx = 0;
+
+  function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+  function norm(s){ return (s||"").toLowerCase().trim().replace(/[^a-z0-9 ]/g,"").replace(/^(a |an |the )/,"").replace(/\s+/g," "); }
+  function correct(val, answers){ var v=norm(val); return answers.some(function(a){ return norm(a)===v; }); }
+
+  function swap(build){
+    var old = center.firstElementChild;
+    var go = function(){ center.innerHTML=""; var s=document.createElement("div"); s.className="scene enter"; build(s); center.appendChild(s); };
+    if(old && !reduce){ old.classList.remove("enter"); old.classList.add("leave"); setTimeout(go,240); } else go();
+  }
+
+  /* ---------- intro ---------- */
+  function intro(){
+    locksEl.classList.remove("show");
+    swap(function(s){
+      var hi = CONFIG.her ? ("alright "+CONFIG.her+" — ") : "alright — ";
+      s.innerHTML =
+        '<div class="eyebrow">a small quest</div>' +
+        '<h1>prove it.</h1>' +
+        '<p class="lead">'+hi+'i’m not just <span class="dim">handing</span> you my instagram. '+
+        'solve 3 riddles and it’s yours. <span class="dim">(yes this is ridiculous. yes you’re going to do it.)</span></p>';
+      var b=document.createElement("button"); b.className="btn big"; b.textContent="begin the quest";
+      b.onclick=function(){ buzz(10); idx=0; locksEl.classList.add("show"); ask(); };
+      s.appendChild(b);
+    });
+  }
+
+  /* ---------- a riddle ---------- */
+  function ask(){
+    var r = CONFIG.riddles[idx];
+    var tries = 0, hintShown=false;
+    swap(function(s){
+      s.innerHTML = '<div class="rnum">riddle '+(idx+1)+' of 3</div><p class="riddle">'+r.q+'</p>';
+      var field=document.createElement("div"); field.className="field";
+      var inp=document.createElement("input"); inp.type="text"; inp.placeholder="your answer…";
+      inp.autocomplete="off"; inp.autocapitalize="off"; inp.spellcheck=false;
+      var go=document.createElement("button"); go.className="btn"; go.textContent="try";
+      field.appendChild(inp); field.appendChild(go); s.appendChild(field);
+
+      var fb=document.createElement("div"); fb.className="feedback"; s.appendChild(fb);
+      var hint=document.createElement("div"); hint.className="hinttext"; s.appendChild(hint);
+      var helpers=document.createElement("div"); helpers.className="helpers"; s.appendChild(helpers);
+      var hintBtn=document.createElement("button"); hintBtn.className="link"; hintBtn.textContent="need a hint?";
+      helpers.appendChild(hintBtn);
+
+      function showHint(){ if(hintShown) return; hintShown=true; hint.textContent="hint: "+r.hint; hintBtn.style.display="none"; }
+      hintBtn.onclick=function(){ showHint(); };
+
+      function skipOffer(){
+        if(helpers.querySelector(".skip")) return;
+        var sk=document.createElement("button"); sk.className="link skip"; sk.textContent="ok, just let me through 😒";
+        sk.onclick=function(){ fb.textContent="fine. i’ll allow it."; solved(true); };
+        helpers.appendChild(sk);
+      }
+
+      function solved(skipped){
+        buzz(skipped?8:18);
+        lockSpans[idx].textContent="🔓"; lockSpans[idx].classList.add("done");
+        if(!reduce && !skipped) sparkle();
+        Array.prototype.forEach.call(field.children, function(c){ c.disabled=true; });
+        setTimeout(function(){ idx++; if(idx<3){ ask(); } else { reveal(); } }, skipped?700:1000);
+      }
+
+      function attempt(){
+        var v=inp.value;
+        if(!v.trim()){ inp.focus(); return; }
+        if(correct(v, r.answers)){
+          fb.textContent = ["nice. 🔓","got it. 🔓","correct. show-off. 🔓"][idx];
+          solved(false);
+        } else {
+          tries++;
+          inp.classList.remove("wrong"); void inp.offsetWidth; inp.classList.add("wrong");
+          buzz(6);
+          fb.textContent = tries===1 ? "not quite… try again." : (tries===2 ? "close-ish. here’s a hint:" : "ok, tricky one, huh.");
+          if(tries>=2) showHint();
+          if(tries>=3) skipOffer();
+          inp.select();
+        }
+      }
+      go.onclick=attempt;
+      inp.addEventListener("keydown", function(e){ if(e.key==="Enter") attempt(); });
+      setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 350);
+    });
+  }
+
+  /* ---------- reveal ---------- */
+  function reveal(){
+    swap(function(s){
+      s.innerHTML =
+        '<div class="eyebrow">quest complete</div>' +
+        '<h1>you found me.</h1>' +
+        '<p class="lead">three riddles, zero quitting. <span class="dim">respect.</span> the prize was just… me. hi 👋</p>';
+      var prize=document.createElement("div"); prize.className="prize";
+      var img=document.createElement("img"); img.className="qr"; img.src="insta.png"; img.alt="my instagram";
+      img.onerror=function(){ img.style.display="none"; };
+      var a=document.createElement("a"); a.className="iglink"; a.href="https://instagram.com/"+CONFIG.instagram;
+      a.target="_blank"; a.rel="noopener"; a.innerHTML='📸 say hi on instagram';
+      var note=document.createElement("div"); note.className="smallnote"; note.textContent="(scan it, or just tap. the saying-hi part’s on you though.)";
+      prize.appendChild(img); prize.appendChild(a); prize.appendChild(note);
+      s.appendChild(prize);
+      var rp=document.createElement("button"); rp.className="replay"; rp.textContent="↺ play again";
+      rp.onclick=function(){ buzz(8); idx=0; Array.prototype.forEach.call(lockSpans,function(l){ l.textContent="🔒"; l.classList.remove("done"); }); intro(); };
+      s.appendChild(rp);
+    });
+    if(!reduce) bigBurst();
+  }
+
+  /* ---------- sparkle confetti ---------- */
+  var canvas=document.getElementById("fx"), ctx=canvas.getContext("2d"), parts=[], raf=null;
+  function size(){ var d=Math.min(window.devicePixelRatio||1,2); canvas.width=innerWidth*d; canvas.height=innerHeight*d; canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px"; ctx.setTransform(d,0,0,d,0,0); }
+  addEventListener("resize", size); size();
+  var COL=["#ffd479","#ffb347","#fff4e2","#ff5f8f","#b88cff"];
+  function spawn(n,cx,cy,up){ for(var i=0;i<n;i++){ var a=(Math.PI*2)*(i/n)+(i%5)*.21, sp=3+(i%9)*.9; parts.push({x:cx,y:cy,vx:Math.cos(a)*sp*(.6+(i%4)*.15),vy:Math.sin(a)*sp-up,s:3+(i%4)*2,rot:(i%6)*.5,vr:(i%5-2)*.2,c:COL[i%COL.length],life:1,fade:.008+(i%3)*.003}); } if(!raf) raf=requestAnimationFrame(tick); }
+  function sparkle(){ spawn(26, innerWidth/2, innerHeight*0.42, 4); }
+  function bigBurst(){ spawn(80, innerWidth/2, innerHeight*0.4, 6); }
+  function star(x,y,s,rot,c,al){ ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.globalAlpha=al; ctx.fillStyle=c; ctx.beginPath(); for(var i=0;i<5;i++){ ctx.lineTo(Math.cos((18+i*72)/180*Math.PI)*s, -Math.sin((18+i*72)/180*Math.PI)*s); ctx.lineTo(Math.cos((54+i*72)/180*Math.PI)*s*.45, -Math.sin((54+i*72)/180*Math.PI)*s*.45);} ctx.closePath(); ctx.fill(); ctx.restore(); }
+  function tick(){ ctx.clearRect(0,0,innerWidth,innerHeight); var alive=false; for(var i=0;i<parts.length;i++){ var p=parts[i]; if(p.life<=0) continue; alive=true; p.vy+=.16; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=p.fade; star(p.x,p.y,p.s,p.rot,p.c,Math.max(0,p.life)); } if(alive){ raf=requestAnimationFrame(tick); } else { ctx.clearRect(0,0,innerWidth,innerHeight); parts=[]; raf=null; } }
+
+  intro();
+})();
+</script>
+</body>
+</html>
